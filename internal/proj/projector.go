@@ -1,19 +1,19 @@
-package three_d
+package proj
 
-type Vector2 struct {
-	X, Y float64
-}
-
-type Vector3 struct {
-	X, Y, Z float64
-}
+import (
+	"github.com/hultan/3d/internal/vec"
+)
 
 // See /home/per/Documents/3d projection (latex)/3d projection.tex
-func projectTo2d(v Vector3) Vector2 {
-	return Vector2{v.X / v.Z, v.Y / v.Z}
+
+func ProjectTo2d(v vec.Vector3) vec.Vector2 {
+	return vec.Vector2{
+		X: v.X / v.Z,
+		Y: v.Y / v.Z,
+	}
 }
 
-func projectToScreen(v Vector2) Vector2 {
+func ProjectToScreen(v vec.Vector2, screenWidth, screenHeight float64) vec.Vector2 {
 	// We want :
 	// v.X => -1 .. 1 => 0 .. width
 	// So we do:
@@ -29,5 +29,8 @@ func projectToScreen(v Vector2) Vector2 {
 	// (1-(v.Y + 1)/2) => 1 .. 0				// Invert it since Y axis is inverted
 	// (1-(v.Y + 1)/2)*height => height .. 0
 
-	return Vector2{(v.X + 1) / 2 * width, (1 - (v.Y+1)/2) * height}
+	return vec.Vector2{
+		X: (v.X + 1) / 2 * screenWidth,
+		Y: (1 - (v.Y+1)/2) * screenHeight,
+	}
 }

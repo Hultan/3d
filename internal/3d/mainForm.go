@@ -7,6 +7,10 @@ import (
 
 	"github.com/gotk3/gotk3/cairo"
 	"github.com/gotk3/gotk3/gtk"
+
+	"github.com/hultan/3d/internal/gen"
+	"github.com/hultan/3d/internal/proj"
+	"github.com/hultan/3d/internal/vec"
 )
 
 const applicationTitle = "3d"
@@ -93,7 +97,7 @@ func (m *MainForm) setupMenu() {
 
 var width, height float64
 var fps = 0
-var points3d []Vector3
+var points3d []vec.Vector3
 
 func (m *MainForm) onDraw(da *gtk.DrawingArea, ctx *cairo.Context) {
 	fps++
@@ -101,19 +105,25 @@ func (m *MainForm) onDraw(da *gtk.DrawingArea, ctx *cairo.Context) {
 	m.drawBackground(ctx)
 
 	// The screen is at z=1.0, so we need to place it somewhere behind that
-	dz := math.Sin(float64(fps)/60.0) * 0.5
+	// dz := math.Sin(float64(fps)/60.0) * 0.5
 
 	if len(points3d) == 0 {
-		m.createCube()
+		points3d = gen.GenerateCube()
 	}
 
-	var points2d []Vector2
+	var points2d = make([]vec.Vector2, 0, len(points3d))
+
 	for _, vector3 := range points3d {
 		// For rotating around y-axis:
 		// 	Add cos(fps) to x
 		//	Add sin(fps) to z
-		vector3.Z += dz
-		points2d = append(points2d, projectToScreen(projectTo2d(vector3)))
+		vector3.X += math.Cos(float64(fps)/60.0) * 0.5
+		vector3.Z += math.Sin(float64(fps)/60.0) * 0.5
+
+		// vector3.Z += dz
+		v2 := proj.ProjectTo2d(vector3)
+		vs := proj.ProjectToScreen(v2, width, height)
+		points2d = append(points2d, vs)
 	}
 
 	m.drawCube(ctx, points2d)
@@ -124,7 +134,7 @@ func (m *MainForm) drawBackground(ctx *cairo.Context) {
 	ctx.Paint()
 }
 
-func (m *MainForm) drawLine(ctx *cairo.Context, p1, p2 Vector2) {
+func (m *MainForm) drawLine(ctx *cairo.Context, p1, p2 vec.Vector2) {
 	ctx.SetSourceRGB(1, 0, 0)
 
 	ctx.MoveTo(p1.X, p1.Y)
@@ -132,20 +142,7 @@ func (m *MainForm) drawLine(ctx *cairo.Context, p1, p2 Vector2) {
 	ctx.Stroke()
 }
 
-func (m *MainForm) createCube() {
-	z := 1.5
-
-	points3d = append(points3d, Vector3{-0.5, -0.5, z})
-	points3d = append(points3d, Vector3{0.5, -0.5, z})
-	points3d = append(points3d, Vector3{0.5, 0.5, z})
-	points3d = append(points3d, Vector3{-0.5, 0.5, z})
-	points3d = append(points3d, Vector3{-0.5, -0.5, z + 1})
-	points3d = append(points3d, Vector3{0.5, -0.5, z + 1})
-	points3d = append(points3d, Vector3{0.5, 0.5, z + 1})
-	points3d = append(points3d, Vector3{-0.5, 0.5, z + 1})
-}
-
-func (m *MainForm) drawCube(ctx *cairo.Context, points2d []Vector2) {
+func (m *MainForm) drawCube(ctx *cairo.Context, points2d []vec.Vector2) {
 	m.drawLine(ctx, points2d[0], points2d[1])
 	m.drawLine(ctx, points2d[1], points2d[2])
 	m.drawLine(ctx, points2d[2], points2d[3])
